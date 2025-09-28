@@ -1,0 +1,37 @@
+/**
+ * 코드 품질 관리 설정
+ *
+ * 코드 포맷팅, 스타일 검사 등 코드 품질을 유지하기 위한 도구들을 설정합니다.
+ * Google Java Format을 기본으로 사용하며, 빌드 시 자동으로 포맷팅이 적용됩니다.
+ */
+
+// Spotless configuration for code formatting
+spotless {
+    java {
+        // Use Google Java Format
+        googleJavaFormat '1.22.0'
+
+        // Remove unused imports
+        removeUnusedImports()
+
+        // Trim trailing whitespace
+        trimTrailingWhitespace()
+
+        // End files with newline
+        endWithNewline()
+
+        // Target files
+        target 'src/**/*.java'
+        targetExclude '**/build/**'
+    }
+
+    kotlinGradle {
+        target '*.gradle.kts'
+        ktlint()
+    }
+}
+
+// Add format check to build process
+tasks.named('compileJava') {
+    dependsOn 'spotlessApply'
+}

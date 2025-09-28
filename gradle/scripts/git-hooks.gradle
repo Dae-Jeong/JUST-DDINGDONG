@@ -1,0 +1,62 @@
+/**
+ * Git Hooks 자동 설치 및 관리
+ *
+ * 팀 전체의 코드 품질 일관성을 위해 Git pre-commit hook을 자동으로 설치합니다.
+ * 커밋 전에 코드 포맷팅 검사를 수행하여 일관된 코드 스타일을 유지합니다.
+ */
+
+// Git hooks installation task
+tasks.register('installGitHooks') {
+    description = 'Install Git hooks for code formatting'
+    group = 'git'
+
+    doLast {
+        def gitHooksDir = file('.git/hooks')
+        def preCommitHook = file('.git/hooks/pre-commit')
+
+        // Create hooks directory if it doesn't exist
+        if (!gitHooksDir.exists()) {
+            gitHooksDir.mkdirs()
+        }
+
+        // Create pre-commit hook content
+        def hookContent = '''#!/bin/sh
+# Auto-generated pre-commit hook for code formatting
+
+echo "Running code formatting check..."
+
+# Run spotless check
+./gradlew spotlessCheck --quiet
+
+if [ $? -ne 0 ]; then
+    echo "❌ Code formatting check failed!"
+    echo "💡 Run './gradlew spotlessApply' to fix formatting issues."
+    exit 1
+fi
+
+echo "✅ Code formatting check passed!"
+'''
+
+        // Write hook file
+        preCommitHook.text = hookContent
+
+        // Make it executable (Unix/Mac only)
+        if (!System.getProperty('os.name').toLowerCase().contains('windows')) {
+            try {
+                def process = ['chmod', '+x', preCommitHook.absolutePath].execute()
+                process.waitFor()
+            } catch (Exception e) {
+                println "⚠️  Could not make hook executable: ${e.message}"
+                println "💡 Please run: chmod +x .git/hooks/pre-commit"
+            }
+        }
+
+        println '✅ Git pre-commit hook installed successfully!'
+        println '💡 The hook will check code formatting before each commit.'
+    }
+}
+
+// Automatically install git hooks after project setup
+tasks.named('build') {
+    dependsOn 'installGitHooks'
+}
